@@ -1,0 +1,22 @@
+name = "puskesmas-tamblong-server"
+compatibility_date = "2024-08-12"
+compatibility_flags = [ "nodejs_compat" ]
+
+[vars]
+JWT_SECRET = "secretsecret"
+
+[[kv_namespaces]]
+binding = "puskesmas_tamblong_kv"
+id = "e6857130c4b14231a1c71460385d11c6"
+
+# [[r2_buckets]]
+# binding = "MY_BUCKET"
+# bucket_name = "my-bucket"
+
+[[d1_databases]]
+binding = "DB" # i.e. available in your Worker on env.DB
+database_name = "puskesmas-tamblong"
+database_id = "066ccd98-5255-4d58-a082-d5fb3109a824"
+
+# [ai]
+# binding = "AI"

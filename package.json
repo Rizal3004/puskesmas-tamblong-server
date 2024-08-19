@@ -1,0 +1,16 @@
+{
+  "name": "puskesmas-tamblong-server",
+  "scripts": {
+    "dev": "wrangler dev src/index.ts",
+    "deploy": "wrangler deploy --minify src/index.ts",
+    "gen-types": "wrangler types"
+  },
+  "dependencies": {
+    "hono": "^4.5.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240806.0",
+    "@types/node": "^22.2.0",
+    "wrangler": "^3.71.0"
+  }
+}
