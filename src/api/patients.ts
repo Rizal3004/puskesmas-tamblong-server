@@ -5,7 +5,7 @@ const app = new Hono<{ Bindings: Env }>()
 app.get('/', async (c) => {
   const db = c.env.DB
   const patients = await db.prepare('select * from patients').all()
-  return c.json({patients: patients.results})
+  return c.json(patients.results)
 })
 
 app.get('/:id', async (c) => {
@@ -13,6 +13,14 @@ app.get('/:id', async (c) => {
   const id = c.req.param('id')
   const patient = await db.prepare('select * from patients where id = ?').bind(id).first()
   return c.json(patient)
+})
+
+app.put('/:id', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+  const { name, email, password, phone, address, birthdate } = await c.req.json<{ name: string, email: string, password: string, phone: string, address: string, birthdate: string }>()
+  await db.prepare('update patients set name = ?, email = ?, password = ?, phone = ?, address = ?, birthdate = ? where id = ?').bind(name, email, password, phone, address, birthdate, id).run()
+  return c.json({message: 'Patient updated'})
 })
 
 app.patch('/:id/email', async (c) => {
@@ -58,9 +66,9 @@ app.patch('/:id/birthdate', async (c) => {
 app.delete('/:id', async (c) => {
   const db = c.env.DB
   const id = c.req.param('id')
-  const isBooked = await db.prepare('select * from booking_activity where pasien_id = ?').bind(id).first()
+  const isBooked = await db.prepare('select * from booking_activity where pasien_id = ?').bind(id).all()
   if (isBooked) {
-    return c.text('Patient is still booked', 400)
+    await db.prepare('delete from booking_activity where pasien_id = ?').bind(id).run()
   }
   await db.prepare('delete from patients where id = ?').bind(id).run()
   return c.json({message: 'Patient deleted'})

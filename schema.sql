@@ -17,6 +17,13 @@ CREATE TABLE "booking_activity" (
   FOREIGN KEY ("pasien_id") REFERENCES "patients" ("id")
 );
 
+CREATE TABLE admin (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL UNIQUE,
+    password TEXT NOT NULL
+);
+
+
 CREATE TABLE "doctor" (
   "id" INTEGER PRIMARY KEY AUTOINCREMENT,
   "jam_kerja_start" TIME DEFAULT NULL,

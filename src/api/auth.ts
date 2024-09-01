@@ -31,6 +31,24 @@ app.post('/login', async (c) => {
   return c.json({ token, patient: result })
 })
 
+app.post('/admin/login', async (c) => {
+  const db = c.env.DB
+  const { username, password } = await c.req.json<{ username: string, password: string }>()
+  const jwtSecret = c.env.JWT_SECRET
+
+  console.log({username, password})
+
+  const result = await db.prepare('select * from admin where username = ? and password = ?').bind(username, password).first()
+
+  if (!result) {
+    return c.text('Invalid username or password', 401)
+  }
+
+  const token = await sign({ id: result.id }, jwtSecret)
+
+  return c.json({ token, admin: result })
+})
+
 app.post('/verify', async (c) => {
   const db = c.env.DB
 
@@ -44,6 +62,21 @@ app.post('/verify', async (c) => {
 
   return c.json({ patient })
 })
+
+app.post('/admin/verify', async (c) => {
+  const db = c.env.DB
+
+  const { id } = c.get('jwtPayload')
+
+  const admin = await db.prepare('select * from admin where id = ?').bind(id).first()
+
+  if (!admin) {
+    return c.text('Invalid token', 401)
+  }
+
+  return c.json({ admin })
+})
+
 
 app.post('/register', async (c) => {
   const db = c.env.DB
