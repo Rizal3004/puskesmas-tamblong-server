@@ -84,15 +84,17 @@ app.post('/register', async (c) => {
     email,
     password,
     name,
-    nik
+    nik,
+    birthdate
   }: {
     email: string
     password: string
     name: string
     nik: string
+    birthdate: string
   } = await c.req.json()
 
-  await db.prepare('insert into patients (email, password, name, nik) values (?, ?, ?, ?)').bind(email, password, name, nik).run()
+  await db.prepare('insert into patients (email, password, name, nik, birthdate) values (?, ?, ?, ?, ?)').bind(email, password, name, nik, birthdate).run()
 
   return c.json({ message: 'success' })
 })

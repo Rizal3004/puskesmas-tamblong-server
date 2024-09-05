@@ -25,9 +25,14 @@ app.get('/:id/queue', async (c) => {
   const id = c.req.param('id')
   const bookingActivity = await db.prepare('select * from booking_activity where id = ?').bind(id).first()
   if (!bookingActivity) return
-  const queue = await db.prepare('select count(*) as queue from booking_activity where dokter_id = ? and pasien_id = ? and status = "booked" and date = ?').bind(bookingActivity.dokter_id, bookingActivity.pasien_id, bookingActivity.date).first()
+  const queue = await db.prepare(`
+    SELECT COUNT(*) + 1 AS no_antrian
+FROM booking_activity
+WHERE date = (SELECT date FROM booking_activity WHERE id = ?)
+AND starts_at < (SELECT starts_at FROM booking_activity WHERE id = ?);
+    `).bind(id, id).first()
   if (!queue) return c.json({ queue: 0 })
-  return c.json({ queue: queue.queue })
+  return c.json({ queue: queue.no_antrian })
 })
 
 app.post('/', async (c) => {
@@ -65,22 +70,24 @@ app.post('/emergency', async (c) => {
   const {
     dokter_id,
     name,
+    nik,
     keluhan,
   } = await c.req.json()
 
   console.log({
     dokter_id,
     name,
+    nik,
     keluhan
   })
 
-  await db.prepare('insert into patients (name, password) values (?, "user123")').bind(name).run()
+  await db.prepare('insert into patients (name, password, nik) values (?, "user123", ?)').bind(name, nik).run()
 
   const pasien_id = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
 
   await db.prepare(`
     INSERT INTO booking_activity (pasien_id, dokter_id, date, patient_type, keluhan, starts_at, ends_at) 
-    VALUES (?, ?, DATE('now'), 'umum', ?, TIME('now'), TIME('now', '+2 hours'));
+    VALUES (?, ?, DATE('now'), 'umum', ?, time('now', 'localtime'), TIME('now', '+2 hours', 'localtime'));
   `).bind(pasien_id, dokter_id, keluhan).run()
 
   const booking_activity_id = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
@@ -89,6 +96,7 @@ app.post('/emergency', async (c) => {
 
   return c.json({ booking_activity: newBookingActivity })
 })
+
 
 app.get('/patient/:id', async (c) => {
   const db = c.env.DB
