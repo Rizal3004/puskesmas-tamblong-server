@@ -20,7 +20,7 @@ app.put('/:id', async (c) => {
   const id = c.req.param('id')
   const { name, email, password, phone, address, birthdate } = await c.req.json<{ name: string, email: string, password: string, phone: string, address: string, birthdate: string }>()
   await db.prepare('update patients set name = ?, email = ?, password = ?, phone = ?, address = ?, birthdate = ? where id = ?').bind(name, email, password, phone, address, birthdate, id).run()
-  return c.json({message: 'Patient updated'})
+  return c.json({ message: 'Patient updated' })
 })
 
 app.patch('/:id/email', async (c) => {
@@ -28,7 +28,7 @@ app.patch('/:id/email', async (c) => {
   const id = c.req.param('id')
   const { email } = await c.req.json<{ email: string }>()
   await db.prepare('update patients set email = ? where id = ?').bind(email, id).run()
-  return c.json({message: 'Email updated'})
+  return c.json({ message: 'Email updated' })
 })
 
 app.patch('/:id/password', async (c) => {
@@ -36,7 +36,7 @@ app.patch('/:id/password', async (c) => {
   const id = c.req.param('id')
   const { password } = await c.req.json<{ password: string }>()
   await db.prepare('update patients set password = ? where id = ?').bind(password, id).run()
-  return c.json({message: 'Password updated'})
+  return c.json({ message: 'Password updated' })
 })
 
 app.patch('/:id/phone', async (c) => {
@@ -44,7 +44,7 @@ app.patch('/:id/phone', async (c) => {
   const id = c.req.param('id')
   const { phone } = await c.req.json<{ phone: string }>()
   await db.prepare('update patients set phone = ? where id = ?').bind(phone, id).run()
-  return c.json({message: 'Phone updated'})
+  return c.json({ message: 'Phone updated' })
 })
 
 app.patch('/:id/address', async (c) => {
@@ -52,7 +52,7 @@ app.patch('/:id/address', async (c) => {
   const id = c.req.param('id')
   const { address } = await c.req.json<{ address: string }>()
   await db.prepare('update patients set address = ? where id = ?').bind(address, id).run()
-  return c.json({message: 'Address updated'})
+  return c.json({ message: 'Address updated' })
 })
 
 app.patch('/:id/birthdate', async (c) => {
@@ -60,7 +60,7 @@ app.patch('/:id/birthdate', async (c) => {
   const id = c.req.param('id')
   const { birthdate } = await c.req.json<{ birthdate: string }>()
   await db.prepare('update patients set birthdate = ? where id = ?').bind(birthdate, id).run()
-  return c.json({message: 'Birthdate updated'})
+  return c.json({ message: 'Birthdate updated' })
 })
 
 app.delete('/:id', async (c) => {
@@ -71,7 +71,7 @@ app.delete('/:id', async (c) => {
     await db.prepare('delete from booking_activity where pasien_id = ?').bind(id).run()
   }
   await db.prepare('delete from patients where id = ?').bind(id).run()
-  return c.json({message: 'Patient deleted'})
+  return c.json({ message: 'Patient deleted' })
 })
 
 export default app

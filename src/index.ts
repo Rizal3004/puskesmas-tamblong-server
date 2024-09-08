@@ -7,13 +7,18 @@ import bookingActivities from './api/bookingActivities'
 import doctors from './api/doctors'
 import poli from './api/poli'
 
+// inisiasi aplikasi
 const app = new Hono()
 
+// menggunakan cors
 app.use('*', cors())
 
+// GET: /
 app.get('/', (c) => {
   return c.text('Hello Hono!')
 })
+
+
 
 app.route('/auth', auth)
 app.route('/patients', patients)

@@ -16,11 +16,14 @@ app.get('/:id', async (c) => {
 })
 
 app.patch('/:id', async (c) => {
+  // Ambil database dan KV
   const db = c.env.DB
   const kv = c.env.puskesmas_tamblong_kv
 
+  // Ambil id dari parameter URL
   const id = c.req.param('id')
-  console.log(id)
+
+  // Ambil data dari body request
   const {
     email,
     imageFile,
@@ -39,15 +42,6 @@ app.patch('/:id', async (c) => {
     poli_id: string
   } = await c.req.parseBody()
 
-  console.log({
-    email,
-    imageFile,
-    jam_kerja_end,
-    jam_kerja_start,
-    name,
-    phone,
-    poli_id,
-  })
   try {
     await db.prepare(`
       update doctor 
@@ -65,7 +59,6 @@ app.patch('/:id', async (c) => {
       const imageAsBase64 = base64Encode(await imageFile.arrayBuffer())
       await kv.put(`images/doctor/${id}.png`, imageAsBase64)
     } catch (error) {
-      console.log(error)
       return c.text(error as string, 500)
     }
   }
@@ -76,6 +69,7 @@ app.put('/:id', async (c) => {
   const db = c.env.DB
 
   const id = c.req.param('id')
+
   const {
     email,
     jam_kerja_end,
@@ -136,8 +130,6 @@ app.post('/', async (c) => {
     poli_id: string
   } = await c.req.parseBody()
 
-  console.log('1')
-
   await db.prepare(`
     insert into 
     doctor (email, jam_kerja_start, jam_kerja_end, name, phone, poli_id)
@@ -157,6 +149,7 @@ app.post('/', async (c) => {
 })
 
 app.get('/image/:id', async (c) => {
+  // Ambil KV
   const kv = c.env.puskesmas_tamblong_kv
   const id = c.req.param('id')
   const image = await kv.get(`images/doctor/${id}.png`)
@@ -174,8 +167,6 @@ app.delete('/:id', async (c) => {
   const kv = c.env.puskesmas_tamblong_kv
 
   const id = c.req.param('id')
-  console.log(1)
-  console.log(id)
   const isHandleBooking = await db.prepare('select * from booking_activity where dokter_id = ? and status = "booked"').bind(id).first()
   console.log(2)
   if (isHandleBooking) {
