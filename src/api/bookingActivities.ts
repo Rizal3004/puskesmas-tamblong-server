@@ -47,7 +47,7 @@ app.get('/:id/queue', async (c) => {
     AND starts_at < (SELECT starts_at FROM booking_activity WHERE id = ?);
     `).bind(id, id).first()
   if (!queue) return c.json({ queue: 0 })
-  
+
   // return data antrian
   return c.json({ queue: queue.no_antrian })
 })
@@ -75,7 +75,7 @@ app.post('/', async (c) => {
   // jika dokter tidak tersedia
   if (bookingActivity) {
     return c.json({ error: 'Doctor is not available at the time' }, 400)
-  }    
+  }
 
   // membuat booking activity
   await db.prepare('insert into booking_activity (bpjs_number, pasien_id, dokter_id, date, patient_type, keluhan, starts_at, ends_at ) values ( ?, ?, ?, ?, ?, ?, ?, ?)').bind(bpjs_number, pasien_id, dokter_id, date, patient_type, keluhan, starts_at, ends_at).run()
@@ -96,13 +96,25 @@ app.post('/emergency', async (c) => {
   const db = c.env.DB
 
   // Ngambil data dari inputan user
+  // "name": "fadsfads", "dokter_id": 5, "keluhan": "fasdfadsf", "phone": "afsdfadsf", "date": "2024-09-19", "starts_at": "09:00:00", "ends_at": "10:00:00" 
   const {
     dokter_id,
     name,
     phone, // tambah no telp
+    date,
+    starts_at,
+    ends_at,
     nik,
     keluhan,
   } = await c.req.json()
+
+  // check if the doctor is available at the time
+  const bookingActivity = await db.prepare('select * from booking_activity where dokter_id = ? and date = ? and ((starts_at >= ? and starts_at < ?) or (ends_at > ? and ends_at <= ?))').bind(dokter_id, date, starts_at, ends_at, starts_at, ends_at).first()
+
+  // jika dokter tidak tersedia
+  if (bookingActivity) {
+    return c.json({ error: 'Doctor is not available at the time' }, 400)
+  }
 
   // membuat pasien baru
   await db.prepare('insert into patients (name, password, nik, phone) values (?, "user123", ?, ?)').bind(name, nik, phone).run()
@@ -111,16 +123,26 @@ app.post('/emergency', async (c) => {
   const pasien_id = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
 
   // membuat booking activity
-  await db.prepare(`
-    INSERT INTO booking_activity (pasien_id, dokter_id, date, patient_type, keluhan, starts_at, ends_at) 
-    VALUES (?, ?, DATE('now'), 'umum', ?, time('now', 'localtime'), TIME('now', '+2 hours', 'localtime'));
-  `).bind(pasien_id, dokter_id, keluhan).run()
+  await db.prepare('insert into booking_activity ( pasien_id, dokter_id, date, keluhan, starts_at, ends_at, patient_type ) values ( ?, ?, ?, ?, ?, ?, "umum")').bind(pasien_id, dokter_id, date, keluhan, starts_at, ends_at).run()
 
   // ngambil id booking activity yang baru dibuat
   const booking_activity_id = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
 
   // ngambil data booking activity yang baru dibuat
   const newBookingActivity = await db.prepare('select * from booking_activity where id = ?').bind(booking_activity_id).first()
+
+
+  // // membuat booking activity
+  // await db.prepare(`
+  //   INSERT INTO booking_activity (pasien_id, dokter_id, date, patient_type, keluhan, starts_at, ends_at) 
+  //   VALUES (?, ?, DATE('now'), 'umum', ?, time('now', 'localtime'), TIME('now', '+2 hours', 'localtime'));
+  // `).bind(pasien_id, dokter_id, keluhan).run()
+
+  // // ngambil id booking activity yang baru dibuat
+  // const booking_activity_id = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
+
+  // // ngambil data booking activity yang baru dibuat
+  // const newBookingActivity = await db.prepare('select * from booking_activity where id = ?').bind(booking_activity_id).first()
 
   return c.json({ booking_activity: newBookingActivity })
 })
@@ -136,7 +158,7 @@ app.get('/patient/:id', async (c) => {
 
 // Mengupdate booking activity
 app.post('/:id/done', async (c) => {
-  
+
   const db = c.env.DB
   const id = c.req.param('id')
   const {
