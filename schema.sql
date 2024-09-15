@@ -32,6 +32,7 @@ CREATE TABLE "doctor" (
   "phone" VARCHAR(55) DEFAULT NULL,
   "email" VARCHAR(255) DEFAULT NULL,
   "foto" VARCHAR(255) DEFAULT NULL,
+  "password" VARCHAR(255) NOT NULL,
   "poli_id" INTEGER NOT NULL,
   FOREIGN KEY ("poli_id") REFERENCES "poli" ("id")
 );

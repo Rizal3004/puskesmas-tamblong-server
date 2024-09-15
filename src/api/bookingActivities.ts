@@ -8,6 +8,12 @@ app.get('/', async (c) => {
   const db = c.env.DB
   // Status booking activity
   const status = c.req.query('status')
+  const dokterId = c.req.query('doctor_id')
+
+  if (dokterId) {
+    const bookingActivities = await db.prepare('select * from booking_activity where dokter_id = ? and status = "booked"').bind(dokterId).all()
+    return c.json(bookingActivities.results)
+  }
 
   // Kalo ada status
   if (status) {
@@ -165,11 +171,17 @@ app.post('/:id/done', async (c) => {
     penyakit,
     resep
   } = await c.req.json()
-  await db.prepare(`
+
+  console.log({ id, penyakit, resep })
+  const result = await db.prepare(`
     update booking_activity 
     set status = "done", penyakit = ?, resep = ? 
     where id = ?`
   ).bind(penyakit, resep, id).run()
+
+  console.log(result)
+
+  console.log('done')
 
   return c.json({ message: 'Booking activity done' })
 })

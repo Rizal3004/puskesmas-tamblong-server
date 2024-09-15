@@ -68,6 +68,34 @@ app.post('/admin/login', async (c) => {
   return c.json({ token, admin: result })
 })
 
+// Function to handle doctor login
+app.post('/doctor/login', async (c) => {
+  // Get database
+  const db = c.env.DB
+
+  // Get username and password from user input
+  const { email, password } = await c.req.json<{ email: string, password: string }>()
+
+  console.log({ email, password })
+
+  // Get JWT
+  const jwtSecret = c.env.JWT_SECRET
+
+  // Find admin by username and password
+  const result = await db.prepare('select * from doctor where email = ? and password = ?').bind(email, password).first()
+
+  // If admin not found, return error message
+  if (!result) {
+    return c.text('Email dan password tidak ditemukan', 401)
+  }
+
+  // Create JWT token
+  const token = await sign({ id: result.id }, jwtSecret)
+
+  // Send token and admin data
+  return c.json({ token, doctor: result })
+})
+
 // Verify token
 app.post('/verify', async (c) => {
   // Get database
@@ -89,24 +117,44 @@ app.post('/verify', async (c) => {
 })
 
 // Verify admin token
-app.post('/admin/verify', async (c) => {
-  // Get database
-  const db = c.env.DB
+// app.post('/admin/verify', async (c) => {
+//   // Get database
+//   const db = c.env.DB
 
-  // Get id from JWT payload
-  const { id } = c.get('jwtPayload')
+//   // Get id from JWT payload
+//   const { id } = c.get('jwtPayload')
 
-  // Find admin
-  const admin = await db.prepare('select * from admin where id = ?').bind(id).first()
+//   // Find admin
+//   const admin = await db.prepare('select * from admin where id = ?').bind(id).first()
 
-  // If admin not found, return error message
-  if (!admin) {
-    return c.text('Invalid token', 401)
-  }
+//   // If admin not found, return error message
+//   if (!admin) {
+//     return c.text('Invalid token', 401)
+//   }
 
-  // Send admin data
-  return c.json({ admin })
-})
+//   // Send admin data
+//   return c.json({ admin })
+// })
+
+// Verify doctor token
+// app.post('/verify/doctor', async (c) => {
+//   // Get database
+//   const db = c.env.DB
+
+//   // Get id from JWT payload
+//   const { id } = c.get('jwtPayload')
+
+//   // Find admin
+//   const admin = await db.prepare('select * from doctor where id = ?').bind(id).first()
+
+//   // If admin not found, return error message
+//   if (!admin) {
+//     return c.text('Invalid token', 401)
+//   }
+
+//   // Send admin data
+//   return c.json({ admin })
+// })
 
 // Register user
 app.post('/register', async (c) => {
