@@ -4,7 +4,15 @@ const app = new Hono<{ Bindings: Env }>()
 
 app.get('/', async (c) => {
   const db = c.env.DB
-  const doctors = await db.prepare('select * from doctor where status = "active"').all()
+
+  const doctorId = c.req.query('doctor_id')
+
+  if (doctorId) {
+    const doctors = await db.prepare('select * from doctor where poli_id = (select poli_id from doctor where id = ?)').bind(doctorId).all()
+    return c.json(doctors.results)
+  }
+
+  const doctors = await db.prepare('select * from doctor').all()
   return c.json(doctors.results)
 })
 
@@ -68,31 +76,43 @@ app.patch('/:id', async (c) => {
 app.put('/:id', async (c) => {
   const db = c.env.DB
 
+  const kv = c.env.puskesmas_tamblong_kv
+
   const id = c.req.param('id')
 
   const {
     email,
+    imageFile,
     jam_kerja_end,
     jam_kerja_start,
     name,
     phone,
     poli_id,
+    password
   }: {
     email: string
+    imageFile: File
     jam_kerja_end: string
     jam_kerja_start: string
     name: string
     phone: string
     poli_id: string
-  } = await c.req.json()
+    password: string
+  } = await c.req.parseBody()
 
   await db.prepare(`
     update doctor 
-    set email = ?, jam_kerja_start = ?, jam_kerja_end = ?, name = ?, phone = ?, poli_id = ? 
+    set email = ?, jam_kerja_start = ?, jam_kerja_end = ?, name = ?, phone = ?, poli_id = ?, password = ?
     where id = ?
-  `).bind(email, jam_kerja_start, jam_kerja_end, name, phone, poli_id, id).run()
+  `).bind(email, jam_kerja_start, jam_kerja_end, name, phone, poli_id, password,id).run()
 
   const doctor = await db.prepare('select * from doctor where id = ?').bind(id).first()
+
+  if (imageFile) {
+    const imageAsBase64 = base64Encode(await imageFile.arrayBuffer())
+  
+    await kv.put(`images/doctor/${id}.png`, imageAsBase64)
+  }
 
   return c.json({ doctor })
 })
@@ -100,11 +120,16 @@ app.put('/:id', async (c) => {
 app.post('/:id/deactivate', async (c) => {
   const db = c.env.DB
   const id = c.req.param('id')
-  const isHandleBooking = await db.prepare('select * from booking_activity where dokter_id = ? and status = "booked"').bind(id).first()
-  if (isHandleBooking) {
-    return c.text('Doctor is handling booking activity, cannot be deleted', 400)
-  }
+
   await db.prepare('update doctor set status = "nonactive" where id = ?').bind(id).run()
+  return c.json({ message: 'Doctor deleted' })
+})
+
+app.post('/:id/activate', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+
+  await db.prepare('update doctor set status = "active" where id = ?').bind(id).run()
   return c.json({ message: 'Doctor deleted' })
 })
 
@@ -120,6 +145,7 @@ app.post('/', async (c) => {
     name,
     phone,
     poli_id,
+    password
   }: {
     email: string
     imageFile: File
@@ -128,13 +154,14 @@ app.post('/', async (c) => {
     name: string
     phone: string
     poli_id: string
+    password: string
   } = await c.req.parseBody()
 
   await db.prepare(`
     insert into 
-    doctor (email, jam_kerja_start, jam_kerja_end, name, phone, poli_id)
-    values (?, ?, ?, ?, ?, ?)
-  `).bind(email, jam_kerja_start, jam_kerja_end, name, phone, poli_id).run()
+    doctor (email, jam_kerja_start, jam_kerja_end, name, phone, poli_id, password)
+    values (?, ?, ?, ?, ?, ?, ?)
+  `).bind(email, jam_kerja_start, jam_kerja_end, name, phone, poli_id, password).run()
 
   const doctorId = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
   const doctor = await db.prepare('select * from doctor where id = ?').bind(doctorId).first()

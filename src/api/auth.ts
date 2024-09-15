@@ -167,17 +167,21 @@ app.post('/register', async (c) => {
     password,
     name,
     nik,
-    birthdate
+    birthdate,
+    address,
+    phone,
   }: {
     email: string
     password: string
     name: string
     nik: string
     birthdate: string
+    address: string
+    phone: string
   } = await c.req.json()
 
   // Check if email is already registered
-  await db.prepare('insert into patients (email, password, name, nik, birthdate) values (?, ?, ?, ?, ?)').bind(email, password, name, nik, birthdate).run()
+  await db.prepare('insert into patients (email, password, name, nik, birthdate, address, phone) values (?, ?, ?, ?, ?, ?, ?)').bind(email, password, name, nik, birthdate, address, phone).run()
 
   // Get last inserted id
   return c.json({ message: 'success' })

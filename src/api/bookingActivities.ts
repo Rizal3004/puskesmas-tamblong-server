@@ -11,18 +11,18 @@ app.get('/', async (c) => {
   const dokterId = c.req.query('doctor_id')
 
   if (dokterId) {
-    const bookingActivities = await db.prepare('select * from booking_activity where dokter_id = ? and status = "booked"').bind(dokterId).all()
+    const bookingActivities = await db.prepare('select * from booking_activity where dokter_id = ? and status = "booked" ORDER BY date DESC').bind(dokterId).all()
     return c.json(bookingActivities.results)
   }
 
   // Kalo ada status
   if (status) {
-    const bookingActivities = await db.prepare('select * from booking_activity where status = ?').bind(status).all()
+    const bookingActivities = await db.prepare('select * from booking_activity where status = ? ORDER BY date DESC ').bind(status).all()
     return c.json(bookingActivities.results)
   }
 
   // Kalo ga ada status
-  const bookingActivities = await db.prepare('select * from booking_activity').all()
+  const bookingActivities = await db.prepare('select * from booking_activity ORDER BY date DESC').all()
   return c.json({ bookingActivities: bookingActivities.results })
 })
 
