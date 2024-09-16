@@ -108,6 +108,7 @@ app.post('/emergency', async (c) => {
     name,
     phone, // tambah no telp
     date,
+    birthdate,
     starts_at,
     ends_at,
     nik,
@@ -123,7 +124,7 @@ app.post('/emergency', async (c) => {
   }
 
   // membuat pasien baru
-  await db.prepare('insert into patients (name, password, nik, phone) values (?, "user123", ?, ?)').bind(name, nik, phone).run()
+  await db.prepare('insert into patients (name, password, nik, phone, birthdate) values (?, "user123", ?, ?, ?)').bind(name, nik, phone, birthdate).run()
 
   // ngambil id pasien yang baru dibuat
   const pasien_id = (await db.prepare('select last_insert_rowid() as id').first() as { id: string }).id
