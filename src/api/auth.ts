@@ -1,5 +1,5 @@
 import { Hono } from "hono"
-import { sign } from "hono/jwt"
+import { sign, decode } from "hono/jwt"
 import { jwt } from 'hono/jwt'
 import type { JwtVariables } from 'hono/jwt'
 
@@ -137,24 +137,30 @@ app.post('/verify', async (c) => {
 // })
 
 // Verify doctor token
-// app.post('/verify/doctor', async (c) => {
-//   // Get database
-//   const db = c.env.DB
+app.post('/doctor/decode', async (c) => {
+  // Get database
+  const db = c.env.DB
 
-//   // Get id from JWT payload
-//   const { id } = c.get('jwtPayload')
+  const token = c.req.header('Authorization')?.split(' ')[1] || ''
 
-//   // Find admin
-//   const admin = await db.prepare('select * from doctor where id = ?').bind(id).first()
+  console.log({ token })
 
-//   // If admin not found, return error message
-//   if (!admin) {
-//     return c.text('Invalid token', 401)
-//   }
+  const {payload} = decode(token)
 
-//   // Send admin data
-//   return c.json({ admin })
-// })
+  console.log({ doctor_id: payload.id })
+
+
+  // Find admin
+  const doctor = await db.prepare('select * from doctor where id = ?').bind(payload.id).first()
+
+  // // If admin not found, return error message
+  if (!doctor) {
+    return c.text('Invalid token', 401)
+  }
+
+  // Send admin data
+  return c.json(doctor)
+})
 
 // Register user
 app.post('/register', async (c) => {

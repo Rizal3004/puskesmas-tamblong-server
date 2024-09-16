@@ -104,13 +104,13 @@ app.put('/:id', async (c) => {
     update doctor 
     set email = ?, jam_kerja_start = ?, jam_kerja_end = ?, name = ?, phone = ?, poli_id = ?, password = ?
     where id = ?
-  `).bind(email, jam_kerja_start, jam_kerja_end, name, phone, poli_id, password,id).run()
+  `).bind(email, jam_kerja_start, jam_kerja_end, name, phone, poli_id, password, id).run()
 
   const doctor = await db.prepare('select * from doctor where id = ?').bind(id).first()
 
   if (imageFile) {
     const imageAsBase64 = base64Encode(await imageFile.arrayBuffer())
-  
+
     await kv.put(`images/doctor/${id}.png`, imageAsBase64)
   }
 
@@ -168,7 +168,7 @@ app.post('/', async (c) => {
 
   if (imageFile) {
     const imageAsBase64 = base64Encode(await imageFile.arrayBuffer())
-  
+
     await kv.put(`images/doctor/${doctorId}.png`, imageAsBase64)
   }
   console.log('success')
@@ -203,6 +203,28 @@ app.delete('/:id', async (c) => {
   await db.prepare('delete from doctor where id = ?').bind(id).run()
   await kv.delete(`images/doctor/${id}.png`)
   return c.json({ message: 'Doctor deleted' })
+})
+
+app.post('/:id/change-email-and-password', async (c) => {
+  const db = c.env.DB
+  const id = c.req.param('id')
+
+  const {
+    email,
+    password
+  }: {
+    email: string
+    password: string
+  } = await c.req.json()
+
+  console.log({
+    email,
+    password,
+    id
+  })
+  await db.prepare('update doctor set email = ?, password = ? where id = ?').bind(email, password, id).run()
+  return c.json({ message: 'Email and password updated' })
+
 })
 
 export default app
